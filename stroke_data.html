@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stroke Risk Data Story</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1, h2 { color: #2c3e50; text-align: center; }
+        .act-container { background: #fff; border-radius: 8px; padding: 30px; margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .chart-container { position: relative; height: 300px; width: 100%; margin: 20px 0; }
+        
+        /* Waffle Chart CSS */
+        .waffle-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; width: 250px; margin: 0 auto; }
+        .waffle-dot { width: 20px; height: 20px; border-radius: 50%; background-color: #e0e0e0; }
+        .waffle-dot.red { background-color: #e74c3c; }
+
+        /* Heatmap CSS */
+        .heatmap-grid { display: grid; grid-template-columns: 100px 1fr 1fr 1fr; grid-template-rows: auto 1fr 1fr 1fr; gap: 5px; max-width: 500px; margin: 0 auto; text-align: center; }
+        .hm-header { font-weight: bold; padding: 10px; display: flex; align-items: center; justify-content: center; }
+        .hm-cell { padding: 20px; border-radius: 4px; color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .low-risk { background-color: #3498db; }
+        .med-risk { background-color: #f39c12; }
+        .high-risk { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <h1>The Hidden Clocks: What Really Drives Stroke Risk?</h1>
+
+    <div class="act-container">
+        <h2>Act I: The Set-up (Baseline Risk)</h2>
+        <p style="text-align: center;">Out of 5,000 patients, roughly 5% have had a stroke. Can we predict who they are?</p>
+        <div class="waffle-grid" id="waffle">
+            </div>
+    </div>
+
+    <div class="act-container">
+        <h2>Act II: Data Exploration (The Drivers)</h2>
+        
+        <h3>1. The Inescapable Clock (Age)</h3>
+        <div class="chart-container"><canvas id="ageChart"></canvas></div>
+        
+        <h3>2. The Threat Multipliers (Health Conditions)</h3>
+        <div class="chart-container"><canvas id="conditionsChart"></canvas></div>
+
+        <h3>3. The Plot Twist (Smoking vs. Age)</h3>
+        <div style="display: flex; gap: 20px;">
+            <div class="chart-container" style="width: 50%;"><canvas id="smokingStrokeChart"></canvas></div>
+            <div class="chart-container" style="width: 50%;"><canvas id="smokingAgeChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="act-container">
+        <h2>Act III: Conclusion (The Danger Zone)</h2>
+        <p style="text-align: center;">Combining our strongest predictors: Age and Blood Sugar.</p>
+        
+        <div class="heatmap-grid">
+            <div></div>
+            <div class="hm-header">Low Glucose</div>
+            <div class="hm-header">Borderline</div>
+            <div class="hm-header">High Glucose</div>
+
+            <div class="hm-header">Under 40</div>
+            <div class="hm-cell low-risk">Safe</div>
+            <div class="hm-cell low-risk">Safe</div>
+            <div class="hm-cell med-risk">Monitor</div>
+
+            <div class="hm-header">40 to 60</div>
+            <div class="hm-cell low-risk">Safe</div>
+            <div class="hm-cell med-risk">Monitor</div>
+            <div class="hm-cell high-risk">Warning</div>
+
+            <div class="hm-header">Over 60</div>
+            <div class="hm-cell med-risk">Monitor</div>
+            <div class="hm-cell high-risk">Warning</div>
+            <div class="hm-cell high-risk" style="background-color: #8b0000; border: 3px solid #000;">Danger Zone</div>
+        </div>
+    </div>
+
+    <script>
+        // Draw Waffle Chart (5 red, 95 grey)
+        const waffle = document.getElementById('waffle');
+        for(let i=0; i<100; i++) {
+            let dot = document.createElement('div');
+            dot.className = i < 5 ? 'waffle-dot red' : 'waffle-dot';
+            waffle.appendChild(dot);
+        }
+
+        // Chart defaults
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+        Chart.defaults.color = '#333';
+
+        // Age Line Chart
+        new Chart(document.getElementById('ageChart'), {
+            type: 'line',
+            data: {
+                labels: ['20s', '30s', '40s', '50s', '60s', '70s', '80s'],
+                datasets: [{
+                    label: '% Stroke Risk by Age',
+                    data: [0.1, 0.2, 0.8, 3.5, 8.0, 15.5, 22.0],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 25 } } }
+        });
+
+        // Conditions Bar Chart
+        new Chart(document.getElementById('conditionsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Heart Disease', 'Hypertension'],
+                datasets: [
+                    { label: 'Does Not Have Condition', data: [4.2, 4.0], backgroundColor: '#bdc3c7' },
+                    { label: 'Has Condition', data: [17.0, 13.5], backgroundColor: '#e74c3c' }
+                ]
+            },
+            options: { maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+        });
+
+        // Smoking Charts (Plot twist)
+        new Chart(document.getElementById('smokingStrokeChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Current Smoker', 'Former Smoker'],
+                datasets: [{ label: '% Stroke Risk', data: [5.3, 7.9], backgroundColor: ['#e67e22', '#c0392b'] }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('smokingAgeChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Current Smoker', 'Former Smoker'],
+                datasets: [{ label: 'Average Age', data: [47, 55], backgroundColor: ['#95a5a6', '#7f8c8d'] }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    </script>
+</body>
+</html>
